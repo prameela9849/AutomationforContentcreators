@@ -1,0 +1,406 @@
+// CreatorFlow AI Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  role          String    @default("CREATOR") // CREATOR, EDITOR, MANAGER, ADMIN
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspaces        WorkspaceMember[]
+  ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
+  approvals         Approval[]
+  createdVersions   ContentVersion[]
+  notifications     Notification[]
+  preferences       UserPreference?
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  ownerId     String
+  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members              WorkspaceMember[]
+  creatorProfile       CreatorProfile?
+  brandKit             BrandKit?
+  platformConnections  PlatformConnection[]
+  contentAssets        ContentAsset[]
+  automationRuns       AutomationRun[]
+  scheduledPosts       ScheduledPublication[]
+  calendarEntries      ContentCalendarEntry[]
+  analyticsSnapshots   AnalyticsSnapshot[]
+  sponsorshipLeads     SponsorshipLead[]
+  notifications        Notification[]
+  backgroundJobs       BackgroundJob[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model CreatorProfile {
+  id                String    @id @default(cuid())
+  workspaceId       String    @unique
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  niche             String    @default("Technology & AI")
+  targetAudience    String    @default("Content Creators, Solo Entrepreneurs, Tech Enthusiasts")
+  targetRegion      String    @default("Global")
+  languages         String    @default("English")
+  platforms         String    @default("YOUTUBE,INSTAGRAM,LINKEDIN,TIKTOK")
+  postingFrequency  String    @default("3_TIMES_WEEK")
+  topicsToAvoid     String?
+  bio               String?
+  monthlyViewsGoal  Int       @default(100000)
+  standardRateCard  String?   // JSON rate card { dedicatedVideo: 1500, integratedVideo: 800, shoutout: 300 }
+  updatedAt         DateTime  @updatedAt
+}
+
+model BrandKit {
+  id              String    @id @default(cuid())
+  workspaceId     String    @unique
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brandName       String    @default("CreatorFlow")
+  tagline         String?
+  primaryColor    String    @default("#71A832")
+  secondaryColor  String    @default("#1F2937")
+  accentColor     String    @default("#FFFFF0")
+  fontFamily      String    @default("Inter")
+  headingFont     String    @default("Inter")
+  logoUrl         String?
+  toneOfVoice     String    @default("Inspiring, Actionable, Authoritative")
+  visualGuidelines String?
+  templatesJson   String?   // JSON of custom graphic & layout templates
+  updatedAt       DateTime  @updatedAt
+}
+
+model PlatformConnection {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  platform        String    // YOUTUBE, INSTAGRAM, LINKEDIN, TIKTOK, TWITTER
+  accountName     String
+  accountId       String?
+  status          String    @default("CONNECTED") // CONNECTED, DISCONNECTED, ERROR, MOCK_DEMO
+  permissions     String?   // JSON array of granted scopes
+  authData        String?   // Encrypted / masked tokens
+  lastSyncedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  analyticsSnapshots AnalyticsSnapshot[]
+
+  @@unique([workspaceId, platform, accountName])
+}
+
+model ContentAsset {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title           String
+  contentType     String    // PLAN, VIDEO_CLIP, SCHEDULED_POST, REPORT, SPONSOR_DEAL, GRAPHIC, SCRIPT
+  status          String    @default("IN_REVIEW") // DRAFT, IN_REVIEW, APPROVED, REJECTED, PUBLISHED, ARCHIVED
+  currentVersion  Int       @default(1)
+  metadata        String?   // JSON metadata (aspect ratio, duration, niche, tags, etc.)
+  mediaUrl        String?
+  thumbnailUrl    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  versions        ContentVersion[]
+  automationRuns  AutomationRun[]
+  approvals       Approval[]
+  scheduledPosts  ScheduledPublication[]
+  calendarEntries ContentCalendarEntry[]
+}
+
+model ContentVersion {
+  id              String       @id @default(cuid())
+  assetId         String
+  asset           ContentAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  versionNumber   Int
+  title           String
+  contentJson     String       // Complete structured content for this version
+  summary         String?
+  qualityWarnings String?      // JSON list of verified warnings / fact-checks
+  changeReason    String?      // INITIAL, USER_EDIT, REGENERATION_AFTER_FEEDBACK
+  feedbackId      String?
+  createdById     String?
+  createdBy       User?        @relation(fields: [createdById], references: [id])
+  createdAt       DateTime     @default(now())
+
+  approvals       Approval[]
+  feedbacks       Feedback[]   @relation("VersionFeedbacks")
+
+  @@unique([assetId, versionNumber])
+}
+
+model AutomationRun {
+  id              String       @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  module          String       // PLANNING, VIDEO, PUBLISHING, ANALYTICS, SPONSORSHIP, THUMBNAIL, SCRIPT
+  runNumber       Int          @default(1)
+  status          String       @default("QUEUED") // QUEUED, RUNNING, AWAITING_APPROVAL, APPROVED, REJECTED, COMPLETED, FAILED, CANCELLED
+  currentStep     String       @default("Initialized")
+  inputSummary    String?
+  inputsJson      String       // Original user form inputs
+  outputsJson     String?      // Generated output summary or payload
+  assetId         String?
+  asset           ContentAsset? @relation(fields: [assetId], references: [id])
+  errorMessage    String?
+  isDemoResult    Boolean      @default(false)
+  startedAt       DateTime     @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  events          AutomationRunEvent[]
+  approvals       Approval[]
+  feedbacks       Feedback[]
+}
+
+model AutomationRunEvent {
+  id              String        @id @default(cuid())
+  runId           String
+  run             AutomationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stage           String
+  status          String        // INFO, PROGRESS, SUCCESS, WARNING, ERROR
+  message         String
+  payloadJson     String?
+  createdAt       DateTime      @default(now())
+}
+
+model Approval {
+  id              String         @id @default(cuid())
+  runId           String?
+  run             AutomationRun? @relation(fields: [runId], references: [id])
+  assetId         String
+  asset           ContentAsset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  versionId       String
+  version         ContentVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  decision        String         // PENDING, APPROVED, REJECTED
+  approvedById    String?
+  approvedBy      User?          @relation(fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  notes           String?
+  createdAt       DateTime       @default(now())
+}
+
+model Feedback {
+  id                    String          @id @default(cuid())
+  runId                 String?
+  run                   AutomationRun?  @relation(fields: [runId], references: [id])
+  versionId             String
+  version               ContentVersion  @relation("VersionFeedbacks", fields: [versionId], references: [id], onDelete: Cascade)
+  reason                String          // INCORRECT_INFO, POOR_QUALITY, WRONG_TONE, NOT_RELEVANT, INCORRECT_FORMAT, MISSING_DETAILS, DOES_NOT_MATCH_BRAND, OTHER
+  explanation           String
+  specificImprovements  String
+  referenceMaterial     String?
+  createdAt             DateTime        @default(now())
+}
+
+model ScheduledPublication {
+  id              String        @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assetId         String
+  asset           ContentAsset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  platform        String        // YOUTUBE, INSTAGRAM, LINKEDIN, TIKTOK, TWITTER
+  accountName     String?
+  caption         String
+  mediaUrl        String?
+  scheduledFor    DateTime
+  timeZone        String        @default("UTC")
+  status          String        @default("SCHEDULED") // DRAFT, SCHEDULED, PUBLISHED, FAILED, CANCELLED
+  externalPostId  String?
+  failureReason   String?
+  idempotencyKey  String        @unique
+  metadataJson    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  attempts        PublicationAttempt[]
+}
+
+model PublicationAttempt {
+  id              String               @id @default(cuid())
+  publicationId   String
+  publication     ScheduledPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  status          String               // SUCCESS, FAILED
+  responseJson    String?
+  errorMessage    String?
+  attemptedAt     DateTime             @default(now())
+}
+
+model ContentCalendarEntry {
+  id              String        @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assetId         String?
+  asset           ContentAsset? @relation(fields: [assetId], references: [id])
+  title           String
+  platform        String
+  contentType     String
+  scheduledDate   DateTime
+  status          String        @default("PLANNED") // PLANNED, IN_PROGRESS, READY, PUBLISHED
+  colorCode       String        @default("#71A832")
+  notes           String?
+  createdAt       DateTime      @default(now())
+}
+
+model AnalyticsSnapshot {
+  id              String              @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  platformConnectionId String?
+  platformConnection   PlatformConnection? @relation(fields: [platformConnectionId], references: [id])
+  platform        String
+  accountId       String
+  periodStart     DateTime
+  periodEnd       DateTime
+  metricsJson     String              // Total views, reach, impressions, watch time, engagement rate, etc.
+  insightsJson    String?             // AI evidence-based deductions and patterns
+  retrievedAt     DateTime            @default(now())
+  isDemo          Boolean             @default(false)
+
+  metrics         AnalyticsMetric[]
+}
+
+model AnalyticsMetric {
+  id              String            @id @default(cuid())
+  snapshotId      String
+  snapshot        AnalyticsSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  metricName      String            // views, reach, impressions, watch_time, engagement, clicks, conversions
+  metricValue     Float
+  unit            String            @default("count")
+  periodLabel     String            // "Last 7 Days", "Last 30 Days"
+}
+
+model SponsorshipLead {
+  id                  String                @id @default(cuid())
+  workspaceId         String
+  workspace           Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brandName           String
+  contactName         String?
+  contactEmail        String?
+  proposedBudget      Float                 @default(0)
+  currency            String                @default("USD")
+  creatorRateQuote    Float?
+  deliverablesJson    String                // Array of deliverables { type, platform, quantity, deadline }
+  campaignPeriod      String?
+  usageRights         String?
+  stage               String                @default("INQUIRY") // INQUIRY, NEGOTIATING, CONTRACT_SENT, SIGNED, COMPLETED, DECLINED
+  inquirySource       String                @default("MANUAL") // MANUAL, EMAIL_IMPORT
+  rawInquiryText      String?
+  responseDraft       String?
+  notes               String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  deliverables        CampaignDeliverable[]
+  contracts           ContractRecord[]
+  invoices            InvoiceRecord[]
+}
+
+model CampaignDeliverable {
+  id              String          @id @default(cuid())
+  leadId          String
+  lead            SponsorshipLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title           String
+  platform        String
+  dueDate         DateTime
+  status          String          @default("PENDING") // PENDING, IN_PROGRESS, IN_REVIEW, APPROVED, PUBLISHED
+  publishedUrl    String?
+  notes           String?
+}
+
+model ContractRecord {
+  id              String          @id @default(cuid())
+  leadId          String
+  lead            SponsorshipLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title           String
+  status          String          @default("DRAFT") // DRAFT, SENT, SIGNED, EXPIRED
+  fileUrl         String?
+  signedAt        DateTime?
+  createdAt       DateTime        @default(now())
+}
+
+model InvoiceRecord {
+  id              String          @id @default(cuid())
+  leadId          String
+  lead            SponsorshipLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  invoiceNumber   String          @unique
+  amount          Float
+  currency        String          @default("USD")
+  status          String          @default("DRAFT") // DRAFT, ISSUED, PAID, OVERDUE
+  dueDate         DateTime
+  paidAt          DateTime?
+  createdAt       DateTime        @default(now())
+}
+
+model Notification {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  type            String    // RUN_COMPLETED, APPROVAL_NEEDED, FEEDBACK_RECEIVED, POST_PUBLISHED, POST_FAILED, DEADLINE_ALERT, SYSTEM
+  title           String
+  message         String
+  link            String?
+  read            Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+}
+
+model UserPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailNotifications    Boolean  @default(true)
+  inAppNotifications    Boolean  @default(true)
+  autoSaveDrafts        Boolean  @default(true)
+  aiProviderPreference  String   @default("demo")
+  defaultTimezone       String   @default("UTC")
+  updatedAt             DateTime @updatedAt
+}
+
+model BackgroundJob {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  jobType     String    // VIDEO_RENDER, CONTENT_GENERATE, ANALYTICS_SYNC, SCHEDULED_PUBLISH
+  status      String    @default("QUEUED") // QUEUED, PROCESSING, COMPLETED, FAILED, RETRYING
+  progress    Int       @default(0) // 0 - 100
+  payloadJson String
+  resultJson  String?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

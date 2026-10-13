@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1F2937"/>
+    </linearGradient>
+    <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#71A832"/>
+      <stop offset="100%" stop-color="#5B8A26"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <!-- Decorative Accent Grid -->
+  <circle cx="1100" cy="150" r="300" fill="#71A832" opacity="0.12" filter="blur(40px)"/>
+  <rect x="80" y="80" width="1120" height="560" rx="24" fill="none" stroke="#71A832" stroke-width="3" opacity="0.4"/>
+  <!-- Top Badge -->
+  <rect x="120" y="120" width="320" height="56" rx="12" fill="url(#greenGlow)"/>
+  <text x="280" y="156" fill="#FFFFF0" font-family="Inter, sans-serif" font-weight="800" font-size="22" text-anchor="middle" letter-spacing="2">100% AUTOMATED</text>
+  <!-- Main Bold Headline -->
+  <text x="120" y="320" fill="#FFFFF0" font-family="Inter, sans-serif" font-weight="900" font-size="82">20 HOURS</text>
+  <text x="630" y="320" fill="#71A832" font-family="Inter, sans-serif" font-weight="900" font-size="82">→</text>
+  <text x="730" y="320" fill="#71A832" font-family="Inter, sans-serif" font-weight="900" font-size="82">45 MINS</text>
+  <!-- Subtitle -->
+  <text x="120" y="420" fill="#9CA3AF" font-family="Inter, sans-serif" font-weight="700" font-size="36" letter-spacing="1">MY AI EDITING PIPELINE</text>
+  <!-- Highlight Bar -->
+  <rect x="120" y="470" width="540" height="8" rx="4" fill="#71A832"/>
+  <!-- Footer Tags -->
+  <rect x="120" y="520" width="220" height="48" rx="8" fill="#1F2937" stroke="#374151" stroke-width="2"/>
+  <text x="230" y="552" fill="#FFFFF0" font-family="Inter, sans-serif" font-weight="600" font-size="18" text-anchor="middle">Whisper Cuts</text>
+  <rect x="360" y="520" width="220" height="48" rx="8" fill="#1F2937" stroke="#374151" stroke-width="2"/>
+  <text x="470" y="552" fill="#FFFFF0" font-family="Inter, sans-serif" font-weight="600" font-size="18" text-anchor="middle">Silence Stripper</text>
+  <rect x="600" y="520" width="240" height="48" rx="8" fill="#1F2937" stroke="#374151" stroke-width="2"/>
+  <text x="720" y="552" fill="#71A832" font-family="Inter, sans-serif" font-weight="700" font-size="18" text-anchor="middle">9:16 Auto Frame</text>
+</svg>
