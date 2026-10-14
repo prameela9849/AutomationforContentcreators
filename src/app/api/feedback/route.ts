@@ -5,6 +5,8 @@ import { generateScriptAndCaptions } from "@/services/scriptService";
 import { runContentPlanning } from "@/services/planningService";
 import { processVideoRepurposing } from "@/services/videoService";
 import { generateThumbnailGraphic } from "@/services/thumbnailService";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {

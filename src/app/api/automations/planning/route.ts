@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedWorkspace, errorResponse, successResponse } from "@/lib/apiHelper";
 import prisma from "@/lib/prisma";
 import { runContentPlanning, ContentPlanningInput } from "@/services/planningService";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {

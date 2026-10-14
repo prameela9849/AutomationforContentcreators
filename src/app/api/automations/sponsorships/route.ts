@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { getAuthenticatedWorkspace, errorResponse, successResponse } from "@/lib/apiHelper";
 import prisma from "@/lib/prisma";
 import { processSponsorshipInquiry } from "@/services/sponsorshipService";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
   try {

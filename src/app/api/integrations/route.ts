@@ -3,6 +3,8 @@ import { getAuthenticatedWorkspace, errorResponse, successResponse } from "@/lib
 import prisma from "@/lib/prisma";
 import { getAIProviderStatus } from "@/services/aiProvider";
 import { checkFFmpegInstalled } from "@/services/videoService";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
   try {

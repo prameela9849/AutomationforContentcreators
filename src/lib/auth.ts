@@ -93,7 +93,10 @@ export async function getCurrentUser() {
       avatarUrl: user.avatarUrl,
       workspace: defaultWorkspace,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest === "DYNAMIC_SERVER_USAGE" || error?.message?.includes("Dynamic server usage")) {
+      throw error;
+    }
     console.error("Failed to get current user:", error);
     return null;
   }

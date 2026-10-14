@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { getAuthenticatedWorkspace, errorResponse, successResponse } from "@/lib/apiHelper";
 import prisma from "@/lib/prisma";
 import { generateThumbnailGraphic, ThumbnailInput } from "@/services/thumbnailService";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {

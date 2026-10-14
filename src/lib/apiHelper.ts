@@ -5,34 +5,40 @@ import prisma from "./prisma";
 export async function getAuthenticatedWorkspace() {
   const user = await getCurrentUser();
   if (!user || !user.workspace) {
-    // If running in development and no session cookie is yet set, fall back to default seeded user
-    const defaultUser = await prisma.user.findUnique({
-      where: { email: "creator@creatorflow.io" },
-      include: {
-        workspaces: {
+    // In development only: if no session cookie is yet set, fall back to default seeded user
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const defaultUser = await prisma.user.findUnique({
+          where: { email: "creator@creatorflow.io" },
           include: {
-            workspace: {
+            workspaces: {
               include: {
-                creatorProfile: true,
-                brandKit: true,
+                workspace: {
+                  include: {
+                    creatorProfile: true,
+                    brandKit: true,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    });
+        });
 
-    if (defaultUser && defaultUser.workspaces[0]?.workspace) {
-      return {
-        user: {
-          id: defaultUser.id,
-          email: defaultUser.email,
-          name: defaultUser.name,
-          role: defaultUser.role,
-          avatarUrl: defaultUser.avatarUrl,
-        },
-        workspace: defaultUser.workspaces[0].workspace,
-      };
+        if (defaultUser && defaultUser.workspaces[0]?.workspace) {
+          return {
+            user: {
+              id: defaultUser.id,
+              email: defaultUser.email,
+              name: defaultUser.name,
+              role: defaultUser.role,
+              avatarUrl: defaultUser.avatarUrl,
+            },
+            workspace: defaultUser.workspaces[0].workspace,
+          };
+        }
+      } catch (err) {
+        console.warn("Could not load default development user from database:", err);
+      }
     }
 
     return null;
