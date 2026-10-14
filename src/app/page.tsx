@@ -26,69 +26,85 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  // Query real database metrics for the default workspace
-  const workspace = await prisma.workspace.findFirst({
-    include: {
-      creatorProfile: true,
-      brandKit: true,
-    },
-  });
+  let workspace: any = null;
+  let totalAssets = 0;
+  let pendingApprovals = 0;
+  let scheduledCount = 0;
+  let completedRuns = 0;
+  let failedRuns = 0;
+  let recentRuns: any[] = [];
+  let upcomingSchedule: any[] = [];
+  let recentPerformance: any = null;
 
-  const workspaceId = workspace?.id || "";
+  try {
+    // Query real database metrics for the default workspace
+    workspace = await prisma.workspace.findFirst({
+      include: {
+        creatorProfile: true,
+        brandKit: true,
+      },
+    });
 
-  const [
-    totalAssets,
-    pendingApprovals,
-    scheduledCount,
-    completedRuns,
-    failedRuns,
-    recentRuns,
-    upcomingSchedule,
-    recentPerformance,
-  ] = await Promise.all([
-    prisma.contentAsset.count({ where: { workspaceId } }),
-    prisma.approval.count({
-      where: {
-        asset: { workspaceId },
-        decision: "PENDING",
-      },
-    }),
-    prisma.scheduledPublication.count({
-      where: {
-        workspaceId,
-        status: "SCHEDULED",
-      },
-    }),
-    prisma.automationRun.count({
-      where: {
-        workspaceId,
-        status: { in: ["COMPLETED", "APPROVED"] },
-      },
-    }),
-    prisma.automationRun.count({
-      where: {
-        workspaceId,
-        status: "FAILED",
-      },
-    }),
-    prisma.automationRun.findMany({
-      where: { workspaceId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.scheduledPublication.findMany({
-      where: {
-        workspaceId,
-        status: "SCHEDULED",
-      },
-      orderBy: { scheduledFor: "asc" },
-      take: 4,
-    }),
-    prisma.analyticsSnapshot.findFirst({
-      where: { workspaceId },
-      orderBy: { retrievedAt: "desc" },
-    }),
-  ]);
+    const workspaceId = workspace?.id || "";
+
+    if (workspaceId) {
+      [
+        totalAssets,
+        pendingApprovals,
+        scheduledCount,
+        completedRuns,
+        failedRuns,
+        recentRuns,
+        upcomingSchedule,
+        recentPerformance,
+      ] = await Promise.all([
+        prisma.contentAsset.count({ where: { workspaceId } }),
+        prisma.approval.count({
+          where: {
+            asset: { workspaceId },
+            decision: "PENDING",
+          },
+        }),
+        prisma.scheduledPublication.count({
+          where: {
+            workspaceId,
+            status: "SCHEDULED",
+          },
+        }),
+        prisma.automationRun.count({
+          where: {
+            workspaceId,
+            status: { in: ["COMPLETED", "APPROVED"] },
+          },
+        }),
+        prisma.automationRun.count({
+          where: {
+            workspaceId,
+            status: "FAILED",
+          },
+        }),
+        prisma.automationRun.findMany({
+          where: { workspaceId },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        }),
+        prisma.scheduledPublication.findMany({
+          where: {
+            workspaceId,
+            status: "SCHEDULED",
+          },
+          orderBy: { scheduledFor: "asc" },
+          take: 4,
+        }),
+        prisma.analyticsSnapshot.findFirst({
+          where: { workspaceId },
+          orderBy: { retrievedAt: "desc" },
+        }),
+      ]);
+    }
+  } catch (error) {
+    console.error("Dashboard metrics fetch error:", error);
+  }
 
   let metricsParsed: any = null;
   if (recentPerformance?.metricsJson) {
