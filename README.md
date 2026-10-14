@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # CreatorFlow AI — Smart Automation for Content Creators
 
 A production-oriented full-stack web application built to help content creators automate repetitive work while retaining human control over every AI-generated deliverable and external action.
@@ -189,8 +188,8 @@ Tests verify:
 | **Media Storage** | **Connected** | Local persistent storage in `/public/uploads` |
 | **AI LLM** | **Deterministic Engine / Demo** | Set `OPENAI_API_KEY` in `.env` to activate live GPT-4o calls |
 | **FFmpeg** | **Simulation / Edit-Plan Mode** | Discloses status; if system FFmpeg is in PATH, hardware rendering activates |
-| **Social APIs** | **Connected (OAuth Fallback)** | YouTube, LinkedIn, Instagram seeded; manual 1-click copy available |
-=======
-# AutomationforContentcreators
-CreatorFlow AI is an all-in-one smart automation platform for content creators. It automates content planning, video editing, publishing, performance analysis, sponsorship management, graphic creation, and script generation. With AI-powered workflows, human approval, and personalized improvements, it saves time and boosts productivity.
->>>>>>> origin/main
+
+---
+
+CreatorFlow AI is an all-in-one smart automation platform for content creators. It automates content planning, video editing, publishing, performance analysis, sponsorship management, graphic creation, and script generation with AI-powered workflows and human approval.
+
